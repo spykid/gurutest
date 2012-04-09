@@ -66,7 +66,7 @@ function quiz_schema() {
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+        'not null' => FALSE,
         'default' => 1,
       ),
       'pass_rate' => array(
@@ -187,7 +187,7 @@ function quiz_schema() {
       ),
       'max_score' => array(
         'type' => 'int',
-        'not null' => TRUE,
+        'not null' => FALSE,
         'default' => 0,
       ),
       'allow_skipping' => array(
@@ -269,7 +269,7 @@ function quiz_schema() {
       ),
       'max_score' => array(
         'type' => 'int',
-        'not null' => TRUE,
+        'not null' => FALSE,
         'default' => 0,
       ),
     ),
@@ -324,7 +324,7 @@ function quiz_schema() {
       ),
       'score' => array(
         'type' => 'int',
-        'not null' => TRUE,
+        'not null' => False,
         'default' => 0,
       ),
       'is_invalid' => array(
@@ -649,7 +649,7 @@ function quiz_schema() {
         'type' => 'int',
         'size' => 'tiny',
         'unsigned' => TRUE,
-        'not null' => TRUE,
+        'not null' => FALSE,
       ),
       'number' => array(
         'description' => 'Number of questions to be drawn from this term',
@@ -682,7 +682,10 @@ function quiz_update_7101(&$sandbox) {
  * Implements hook_uninstall().
  */
 function quiz_uninstall() {
-  db_delete('variable')
+ db_delete('variable')
     ->condition('name', "quiz_%", 'like')
     ->execute();
+ db_delete('node') 
+	 ->condition('type', 'quiz')
+	 ->execute();
 }
