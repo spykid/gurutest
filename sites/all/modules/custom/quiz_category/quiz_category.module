@@ -4,4 +4,66 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+function quiz_category_field_quiz_categories($field_name, $entity_type, $bundle, $label, $weight = 0, $display = array()) {
+  // If a field type we know should exist isn't found, clear the Field cache.
+  if (!field_info_field_types('taxonomy_term_reference')) {
+    field_cache_clear();
+  }
+  // Look for or add the specified price field to the requested entity bundle.
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+
+  if (empty($field)) {
+    $field = array(
+      'field_name' => $field_name,
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => 1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'required' => TRUE,
+      'settings' => array(
+        'allowed_values' => array(
+          array(
+            'vocabulary' => 'guru_category',
+            'parent' => 0,
+          ),
+        ),
+      ),
+    );
+    $field = field_create_field($field);
+  }
+
+  if (empty($instance)) {
+    $instance = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
+      'label' => $label,
+      'required' => TRUE,
+      'description' => t('Guru Category'),
+      // Because this widget is locked, we need it to use the full price widget
+      // since the currency option can't be adjusted at the moment.
+      'widget' => array(
+        'type' => 'options_select',
+        'settings' => array(
+          'guru_category' => 'default',
+        ),
+        'weight' => -4,
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'taxonomy_term_reference_link',
+          'weight' => 10,
+        ),
+        'teaser' => array(
+          'type' => 'taxonomy_term_reference_link',
+          'weight' => 10,
+        ),
+      ),
+    );
+
+
+    field_create_instance($instance);
+  }
+}
 ?>
