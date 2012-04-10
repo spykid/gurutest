@@ -1,8 +1,8 @@
 <?php
 
 /* Implement hook_instaal()
- * Tạo Category tự động.
- * Mặc định khi install sẽ tạo dữ liệu cho người dùng. * 
+ * Táº¡o Category tá»± Ä‘á»™ng.
+ * Máº·c Ä‘á»‹nh khi install sáº½ táº¡o dá»¯ liá»‡u cho ngÆ°á»�i dÃ¹ng. * 
  */
 function quiz_category_install() {
   $category = array(      
@@ -11,24 +11,27 @@ function quiz_category_install() {
     'description' => '',
     'hierarchy' => 0,
     'weight' => 0,
+  	'module' => 'guru_category',
   );
-  // Kiểm tra bảng taxonomy_vocabulary đã có Guru Category chưa?
+  // Kiá»ƒm tra báº£ng taxonomy_vocabulary Ä‘Ã£ cÃ³ Guru Category chÆ°a?
   $taxonomy_name = taxonomy_vocabulary_machine_name_load('guru_category');
-  // Nếu chưa có
-  if (!isset($taxonomy_name)) {
+  // Náº¿u chÆ°a cÃ³
+  if (empty($taxonomy_name)) {
     taxonomy_vocabulary_save($category); 
     $quiz_cate = taxonomy_vocabulary_load($category->vid);
   }
-    $quiz_terms = array('PHP', 'MySQL', 'ASP', 'CSS');
-    foreach ($quiz_term as $name) {
-    $term = array(
-      'name' => $name,
-      'description' => '',
-      'format' => NULL,
-      'vocabulary_machine_name' => isset($quiz_cate) ? $quiz_cate->machine_name : NULL,
-      'tid' => NULL,
-      'weight' => 0,);
-   // taxonomy_term_save($term);
+  $quiz_terms = array('php' => t('PHP'), 'mysql' => t('MySQL'), 'asp' => 'ASP', 'css' => 'CSS');
+  foreach ($quiz_term as $key => $values) {
+  $term = array(
+     'name' => check_plain($values),
+     'description' => '',
+     'format' => NULL,
+     'vid'    => $quiz_cate->vid,
+     'vocabulary_machine_name' => isset($quiz_cate) ? $quiz_cate->machine_name : NULL,
+     'tid' => NULL,
+     'weight' => 0,);
+   $term = (Object) $term;
+   taxonomy_term_save($term);
     }  
 }
 
