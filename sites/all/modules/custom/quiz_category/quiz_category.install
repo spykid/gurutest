@@ -1,0 +1,11 @@
+<?php
+function quiz_category_install() {
+ $category = array(
+      'name' => '',
+      'machine_name' => '',
+      'description' => '',
+      'hierarchy' => 0,
+      'weight' => 0,
+    );
+}
+?>
