@@ -640,6 +640,7 @@ function quiz_form_alter(&$form, $form_state, $form_id) {
  * Implements hook_form_FORM_ID_alter() for the quiz node form.
  */
 function quiz_form_quiz_node_form_alter(&$form, $form_state) {
+	dpm($form_state['values'], 'values');
   $form['actions']['submit']['#submit'][] = 'quiz_form_quiz_node_form_submit';
 }
 
@@ -728,7 +729,7 @@ function quiz_insert($node) {
  * Implements hook_update().
  */
 function quiz_update($node) {
-  _quiz_save_user_settings($node);
+  _quiz_save_user_settings($node);  
   // Quiz node vid (revision) was updated.
   if ($node->revision) {
     // Insert a new row in the quiz_node_properties table.
@@ -783,7 +784,8 @@ function quiz_update($node) {
   }
   _quiz_check_num_random($node);
   _quiz_check_num_always($node);
-  quiz_update_max_score_properties(array($node->vid));
+ // quiz_update_max_score_properties(array($node->vid));
+  quiz_update_max_score_properties($node->vid);
 }
 
 /**
@@ -2079,7 +2081,11 @@ function quiz_take_quiz($quiz) {
   // If we're at the end of the quiz.
   if (!empty($quiz_end)) {
     // IMPORTANT: Because of a bug _quiz_get_answers always have to be called before quiz_end_scoring... :/
-    $questions = _quiz_get_answers($quiz, $_SESSION['quiz_' . $quiz->nid]['result_id']);
+
+  	$qnid = isset($quiz) ? $quiz->nid : 0;
+    dpm($qnid, 'qnid');
+  //	$questions = _quiz_get_answers($quiz, $_SESSION['quiz_' . $quiz->nid]['result_id']);
+    $questions = _quiz_get_answers($quiz, $_SESSION['quiz_' . $qnid]['result_id']);
     $score = quiz_end_scoring($quiz, $_SESSION['quiz_' . $quiz->nid]['result_id']);
     if ($quiz->feedback_time == QUIZ_FEEDBACK_NEVER) {
       $content['body']['#markup'] = theme('quiz_no_feedback');
@@ -2560,17 +2566,17 @@ function quiz_update_total_score($quiz, $rid) {
  *  Array with the vid's of the quizzes to update
  */
 function quiz_update_max_score_properties($quizzes_to_update) {
+  dpm($quizzes_to_update, 'quizzes_update');
   if (empty($quizzes_to_update)) {
     return;
   }
-
   db_update('quiz_node_properties')
     ->expression('max_score', 'max_score_for_random * number_of_random_questions + (
       SELECT SUM(max_score)
       FROM {quiz_node_relationship} qnr
       WHERE qnr.question_status = ' . QUESTION_ALWAYS . '
       AND parent_vid = quiz_node_properties.vid)')
-    ->condition('vid', $quizzes_to_update, 'IN')
+    ->condition('vid', $quizzes_to_update)
     ->execute();
   
   db_update('quiz_node_properties')
@@ -2579,21 +2585,21 @@ function quiz_update_max_score_properties($quizzes_to_update) {
       FROM {quiz_terms} qt
       WHERE qt.nid = quiz_node_properties.nid AND qt.vid = quiz_node_properties.vid)')
     ->condition('randomization', 3)
-    ->condition('vid', $quizzes_to_update, 'IN')
+    ->condition('vid', $quizzes_to_update)
     ->execute();
 
   db_update('node_revision')
     ->fields(array('timestamp' => REQUEST_TIME))
-    ->condition('vid', $quizzes_to_update, 'IN')
+    ->condition('vid', $quizzes_to_update)
     ->execute();
 
   db_update('node')
-    ->fields(array('changed' => REQUEST_TIME))
-    ->condition('vid', $quizzes_to_update, 'IN')
-    ->execute();
+  ->fields(array('changed' => REQUEST_TIME))
+  ->condition('vid', $quizzes_to_update)
+  ->execute();
 
-  db_update('quiz_node_results')
-    ->expression('score',
+/*  db_update('quiz_node_results')
+  ->expression('score',
       'ROUND(
         100 * (
           SELECT SUM(a.points_awarded)
@@ -2604,8 +2610,21 @@ function quiz_update_max_score_properties($quizzes_to_update) {
           FROM {quiz_node_properties} qnp
           WHERE qnp.vid = quiz_node_results.vid
         )
-      )', $expression)
-    ->condition('vid', $quizzes_to_update, 'IN')
+      )', $expression)*/
+   db_update('quiz_node_results')
+  ->expression('score',
+      'ROUND(
+        100 * (
+          SELECT SUM(a.points_awarded)
+          FROM {quiz_node_results_answers} a
+          WHERE a.result_id = quiz_node_results.result_id
+        ) / (
+          SELECT max_score
+          FROM {quiz_node_properties} qnp
+          WHERE qnp.vid = quiz_node_results.vid
+        )
+      )')
+    ->condition('vid', $quizzes_to_update)
     ->execute();
 }
 
@@ -3013,8 +3032,10 @@ function quiz_node_map($node, $include_question = TRUE) {
  *
  * @return
  *   Boolean TRUE if update was successful, FALSE otherwise.
+ *   Select Question Add quiz.
  */
 function quiz_set_questions(&$quiz, $questions, $set_new_revision = FALSE) {
+
   $old_vid = $quiz->vid;
   if ($set_new_revision) {
     // Create a new Quiz VID, even if nothing changed.
@@ -3054,7 +3075,7 @@ function quiz_set_questions(&$quiz, $questions, $set_new_revision = FALSE) {
   if (count($questions)) {
     $qnr_insert->execute();
   }
-  quiz_update_max_score_properties(array($quiz->vid));
+  quiz_update_max_score_properties($quiz->vid);
   return TRUE;
 }
 
