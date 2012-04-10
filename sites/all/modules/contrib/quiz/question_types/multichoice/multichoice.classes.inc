@@ -427,7 +427,9 @@ class MultichoiceQuestion extends QuizQuestion {
       $form['tries[answer]']['#title'] = t('Choose one');
       if (isset($response)) {
         if (is_array($response->getResponse())) {
-          $form['tries[answer]']['#default_value'] = array_pop($response->getResponse());
+      //  $form['tries[answer]']['#default_value'] = array_pop($response->getResponse());
+          $res = $response->getResponse();
+          $form['tries[answer]']['#default_value'] = array_pop($res);
         }
       }
     }
