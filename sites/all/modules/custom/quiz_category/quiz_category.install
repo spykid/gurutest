@@ -1,11 +1,40 @@
 <?php
+
+/* Implement hook_instaal()
+ * Tạo Category tự động.
+ * Mặc định khi install sẽ tạo dữ liệu cho người dùng. * 
+ */
 function quiz_category_install() {
- $category = array(
-      'name' => '',
-      'machine_name' => '',
+  $category = array(      
+    'name' => 'Guru Category',
+    'machine_name' => 'guru_category',
+    'description' => '',
+    'hierarchy' => 0,
+    'weight' => 0,
+  );
+  // Kiểm tra bảng taxonomy_vocabulary đã có Guru Category chưa?
+  $taxonomy_name = taxonomy_vocabulary_machine_name_load('guru_category');
+  // Nếu chưa có
+  if (!isset($taxonomy_name)) {
+    taxonomy_vocabulary_save($category); 
+    $quiz_cate = taxonomy_vocabulary_load($category->vid);
+  }
+    $quiz_terms = array('PHP', 'MySQL', 'ASP', 'CSS');
+    foreach ($quiz_term as $name) {
+    $term = array(
+      'name' => $name,
       'description' => '',
-      'hierarchy' => 0,
-      'weight' => 0,
-    );
+      'format' => NULL,
+      'vocabulary_machine_name' => isset($quiz_cate) ? $quiz_cate->machine_name : NULL,
+      'tid' => NULL,
+      'weight' => 0,);
+   // taxonomy_term_save($term);
+    }  
+}
+
+function quiz_category_uninstall() {
+  db_delete('taxonomy_vocabulary')
+  ->condition('machine_name', 'guru_category')
+  ->execute();
 }
 ?>
